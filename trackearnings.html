@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earnings Goal</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6f8;
+    max-width:500px;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+input{
+    width:100%;
+    padding:12px;
+    font-size:18px;
+    margin:10px 0;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    font-size:18px;
+    background:#3f51b5;
+    color:white;
+    border:none;
+    border-radius:10px;
+}
+
+.progress{
+    height:20px;
+    background:#ddd;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.bar{
+    height:100%;
+    background:#4caf50;
+    width:0%;
+}
+
+.good{
+    color:green;
+    font-weight:bold;
+}
+
+.bad{
+    color:red;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>💰 Earnings Tracker</h1>
+
+<div class="card">
+<h3>Goal</h3>
+
+<label>Target (DKK)</label>
+<input id="goal" type="number" value="10000">
+
+<label>End Date</label>
+<input id="endDate" type="date">
+
+<button onclick="saveGoal()">Save Goal</button>
+</div>
+
+<div class="card">
+
+<h3>Today's Earnings</h3>
+
+<input id="amount" type="number" placeholder="How much did you earn today?">
+
+<button onclick="addMoney()">Add Earnings</button>
+
+</div>
+
+<div class="card">
+
+<h3>Status</h3>
+
+<p>Total Earned:
+<b><span id="earned">0</span> DKK</b></p>
+
+<p>Remaining:
+<b><span id="remaining">10000</span> DKK</b></p>
+
+<p>Original Daily Goal:
+<b><span id="dailyGoal">0</span> DKK</b></p>
+
+<p>Needed Per Remaining Day:
+<b><span id="neededNow">0</span> DKK</b></p>
+
+<p id="status"></p>
+
+<div class="progress">
+<div class="bar" id="bar"></div>
+</div>
+
+</div>
+
+<script>
+
+let startDate = new Date();
+
+if(!localStorage.startDate){
+    localStorage.startDate=startDate.toISOString();
+}else{
+    startDate=new Date(localStorage.startDate);
+}
+
+if(!localStorage.goal){
+    localStorage.goal=10000;
+}
+
+if(!localStorage.total){
+    localStorage.total=0;
+}
+
+if(!localStorage.endDate){
+    let d=new Date();
+    d.setMonth(d.getMonth()+4);
+    localStorage.endDate=d.toISOString().slice(0,10);
+}
+
+document.getElementById("goal").value=localStorage.goal;
+document.getElementById("endDate").value=localStorage.endDate;
+
+function saveGoal(){
+
+localStorage.goal=document.getElementById("goal").value;
+localStorage.endDate=document.getElementById("endDate").value;
+
+update();
+
+}
+
+function addMoney(){
+
+let total=Number(localStorage.total);
+total+=Number(document.getElementById("amount").value);
+
+localStorage.total=total;
+
+document.getElementById("amount").value="";
+
+update();
+
+}
+
+function update(){
+
+let goal=Number(localStorage.goal);
+let earned=Number(localStorage.total);
+
+let remaining=goal-earned;
+
+let end=new Date(localStorage.endDate);
+
+let totalDays=Math.ceil((end-startDate)/(1000*60*60*24));
+
+let elapsed=Math.ceil((new Date()-startDate)/(1000*60*60*24));
+
+if(elapsed<0) elapsed=0;
+
+let remainingDays=Math.max(1,totalDays-elapsed);
+
+let dailyGoal=(goal/totalDays);
+
+let neededNow=(remaining/remainingDays);
+
+let expected=dailyGoal*elapsed;
+
+let ahead=earned-expected;
+
+document.getElementById("earned").innerHTML=earned.toFixed(0);
+document.getElementById("remaining").innerHTML=Math.max(0,remaining).toFixed(0);
+
+document.getElementById("dailyGoal").innerHTML=dailyGoal.toFixed(0);
+
+document.getElementById("neededNow").innerHTML=Math.max(0,neededNow).toFixed(0);
+
+let pct=Math.min(100,(earned/goal)*100);
+
+document.getElementById("bar").style.width=pct+"%";
+
+let s=document.getElementById("status");
+
+if(ahead>=0){
+s.className="good";
+s.innerHTML="✅ You are "+ahead.toFixed(0)+" DKK ahead of schedule";
+}
+else{
+s.className="bad";
+s.innerHTML="⚠️ You are "+Math.abs(ahead).toFixed(0)+" DKK behind schedule";
+}
+
+}
+
+update();
+
+</script>
+
+</body>
+</html>
